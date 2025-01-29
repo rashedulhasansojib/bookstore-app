@@ -2,7 +2,7 @@
 FROM php:8.2-apache
 
 # Set working directory inside the container
-WORKDIR /var/www/html/public
+WORKDIR /var/www/html/
 
 # Install required system dependencies
 RUN apt-get update && apt-get install -y \
@@ -30,8 +30,8 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --no-script
 # Run auto-scripts manually, ignoring errors
 RUN composer run-script auto-scripts || true
 
-# Switch back to root user
-USER root
+# Allow composer to run as root
+ENV COMPOSER_ALLOW_SUPERUSER 1
 
 # Expose port 80 for Apache
 EXPOSE 80
