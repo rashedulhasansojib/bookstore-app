@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: bookstore-app
+    env: docker
+    repo: https://github.com/rashedulhasansojib/bookstore-app
+    branch: master
+    plan: free
+    rootDir: /
+    dockerCommand: docker build -t bookstore-app .
+    envVars:
+      - key: APP_ENV
+        value: prod
