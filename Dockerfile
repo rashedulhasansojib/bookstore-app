@@ -6,14 +6,14 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     unzip \
     git \
-    php-cli \
+    curl \
     && docker-php-ext-install zip pdo pdo_mysql
+
+# Manually install Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 # Set the working directory
 WORKDIR /var/www/html
-
-# Copy Composer
-COPY --from=composer:latest /usr/local/bin/composer /usr/local/bin/composer
 
 # Copy the composer.lock and composer.json files
 COPY composer.json composer.lock ./
