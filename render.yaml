@@ -6,7 +6,9 @@ services:
     branch: master
     plan: free
     rootDir: /
-    dockerCommand: docker build -t bookstore-app .
+    dockerCommand: |
+      docker build -t bookstore-app . &&
+      docker run -p 10000:80 bookstore-app
     envVars:
       - key: APP_ENV
         value: prod

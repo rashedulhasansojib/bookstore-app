@@ -1,6 +1,9 @@
 vendor/
 node_modules/
 var/
+cache/
 .env
 .git
 .dockerignore
+Dockerfile
+tests/
