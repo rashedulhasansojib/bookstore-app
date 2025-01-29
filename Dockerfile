@@ -1,10 +1,10 @@
 # Use the official PHP 8.2 image with Apache
 FROM php:8.2-apache
 
-# Set the working directory inside the container
+# Set working directory inside the container
 WORKDIR /var/www/html
 
-# Install system dependencies
+# Install required system dependencies
 RUN apt-get update && apt-get install -y \
     unzip \
     git \
@@ -15,17 +15,20 @@ RUN apt-get update && apt-get install -y \
 # Install Composer properly
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Copy Symfony project files to the container
+# Copy Symfony project files into the container
 COPY . .
 
-# Ensure Composer runs as www-data user (not root)
+# Fix permissions
 RUN chown -R www-data:www-data /var/www/html
 
-# Switch to www-data user before installing dependencies
+# Switch to non-root user
 USER www-data
 
-# Install Symfony dependencies
-RUN composer install --no-dev --optimize-autoloader --no-interaction || true
+# Install Symfony Flex manually before running Composer install
+RUN composer global require symfony/flex
+
+# Run Composer install as non-root user
+RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 # Switch back to root user
 USER root
