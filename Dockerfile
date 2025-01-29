@@ -1,40 +1,24 @@
-# Use the official PHP 8.2 image with Apache
 FROM php:8.2-apache
 
-# Set working directory inside the container
+RUN apt-get update && apt-get install -y \
+  git zip unzip libpng-dev \
+  libzip-dev default-mysql-client
+
+# RUN docker-php-ext-install pdo pdo_mysql zip gd
+
+RUN a2enmod rewrite
+
 WORKDIR /var/www
 
-# Install required system dependencies
-RUN apt-get update && apt-get install -y \
-    unzip \
-    git \
-    libicu-dev \
-    libzip-dev \
-    && docker-php-ext-install intl zip opcache
+COPY . /var/www
 
-# Install Composer properly
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copy Symfony project files to the container
-COPY . .
+RUN COMPOSER_ALLOW_SUPERUSER=1 composer install --no-scripts --no-autoloader
 
-# Set correct permissions
-RUN chown -R www-data:www-data /var/www
-
-# Switch to non-root user (to prevent plugin execution issues)
-USER www-data
-
-# Install Symfony dependencies (without global Symfony Flex)
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
-
-# Run auto-scripts manually, ignoring errors
-RUN composer run-script auto-scripts || true
-
-# Switch back to root user
-USER root
-
-# Expose port 80 for Apache
 EXPOSE 80
 
-# Start Apache
+RUN sed -i 's!/var/www/html!/var/www/html/public!g' \
+  /etc/apache2/sites-available/000-default.conf
+
 CMD ["apache2-foreground"]
