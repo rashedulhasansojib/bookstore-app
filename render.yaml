@@ -1,14 +1,29 @@
+# services:
+#   - type: web
+#     name: bookstore-app
+#     env: docker
+#     repo: https://github.com/rashedulhasansojib/bookstore-app
+#     branch: master
+#     plan: free
+#     rootDir: /
+#     dockerCommand: |
+#       docker build -t bookstore-app . &&
+#       docker run -p 10000:80 bookstore-app
+#     envVars:
+#       - key: APP_ENV
+#         value: prod
+
+version: 1
 services:
   - type: web
     name: bookstore-app
-    env: docker
-    repo: https://github.com/rashedulhasansojib/bookstore-app
-    branch: master
-    plan: free
-    rootDir: /
-    dockerCommand: |
-      docker build -t bookstore-app . &&
-      docker run -p 10000:80 bookstore-app
+    env: php
+    buildCommand: |
+      composer install --no-dev --optimize-autoloader
+    startCommand: |
+      php -S 0.0.0.0:10000 -t public
     envVars:
-      - key: APP_ENV
-        value: prod
+      APP_ENV: production
+      APP_SECRET: your_app_secret
+      DATABASE_URL: your_database_url
+    autoDeploy: true
