@@ -12,11 +12,17 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     && docker-php-ext-install intl zip opcache
 
-# Install Composer properly
+# Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Copy Symfony project files to the container
+# Copy application files to the container
 COPY . .
+
+# Copy custom Apache configuration
+COPY 000-default.conf /etc/apache2/sites-available/000-default.conf
+
+# Enable mod_rewrite
+RUN a2enmod rewrite
 
 # Set correct permissions
 RUN chown -R www-data:www-data /var/www/html
@@ -24,14 +30,14 @@ RUN chown -R www-data:www-data /var/www/html
 # Switch to non-root user (to prevent plugin execution issues)
 USER www-data
 
-# Install Symfony dependencies (without global Symfony Flex)
+# Install Symfony dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
 # Run auto-scripts manually, ignoring errors
 RUN composer run-script auto-scripts || true
 
-# Allow composer to run as root
-ENV COMPOSER_ALLOW_SUPERUSER 1
+# Switch back to root user
+USER root
 
 # Expose port 80 for Apache
 EXPOSE 80
