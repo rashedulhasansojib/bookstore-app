@@ -1,46 +1,36 @@
-# Use the official PHP 8.2 image with Apache
-FROM php:8.2-apache
+# Use the official PHP image with FPM
+FROM php:8.2-fpm
 
-# Set working directory inside the container
-WORKDIR /var/www/html/
-
-# Install required system dependencies
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
+    libzip-dev \
     unzip \
     git \
-    libicu-dev \
-    libzip-dev \
-    && docker-php-ext-install intl zip opcache
+    && docker-php-ext-install zip
+
+# Install PDO MySQL extension
+RUN docker-php-ext-install pdo pdo_mysql
+
+# Set the working directory
+WORKDIR /var/www/html
+
+# Copy the composer.lock and composer.json files
+COPY composer.json composer.lock ./
 
 # Install Composer
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copy application files to the container
+# Install PHP dependencies
+RUN composer install --no-dev --optimize-autoloader
+
+# Copy the rest of the application code
 COPY . .
 
-# Copy custom Apache configuration
-COPY 000-default.conf /etc/apache2/sites-available/000-default.conf
+# Set the permissions for the Symfony cache and logs
+RUN chown -R www-data:www-data var/cache var/logs var/sessions
 
-# Enable mod_rewrite
-RUN a2enmod rewrite
+# Expose port 8080
+EXPOSE 8080
 
-# Set correct permissions
-RUN chown -R www-data:www-data /var/www/html
-
-# Switch to non-root user (to prevent plugin execution issues)
-USER www-data
-
-# Install Symfony dependencies
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
-
-# Run auto-scripts manually, ignoring errors
-RUN composer run-script auto-scripts || true
-
-# Switch back to root user
-USER root
-
-# Expose port 80 for Apache
-EXPOSE 80
-
-# Start Apache
-CMD ["apache2-foreground"]
+# Start PHP-FPM
+CMD ["php-fpm"]
