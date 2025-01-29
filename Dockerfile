@@ -1,39 +1,40 @@
-# Use the official PHP image with FPM
-FROM php:8.2-fpm
+# Use the official PHP 8.2 image with Apache
+FROM php:8.2-apache
 
-# Install system dependencies
+# Set working directory inside the container
+WORKDIR /var/www
+
+# Install required system dependencies
 RUN apt-get update && apt-get install -y \
-    libzip-dev \
     unzip \
     git \
-    curl \
-    && docker-php-ext-install zip pdo pdo_mysql
+    libicu-dev \
+    libzip-dev \
+    && docker-php-ext-install intl zip opcache
 
-# Manually install Composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer && \
-    chmod +x /usr/local/bin/composer && \
-    ln -s /usr/local/bin/composer /usr/bin/composer
+# Install Composer properly
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Set the working directory
-WORKDIR /var/www/html
-
-# Copy the composer.lock and composer.json files
-COPY composer.json composer.lock ./
-
-# Verify Composer is installed
-RUN composer --version
-
-# Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader
-
-# Copy the rest of the application code
+# Copy Symfony project files to the container
 COPY . .
 
-# Set the permissions for Symfony cache and logs
-RUN chown -R www-data:www-data var/cache var/logs var/sessions
+# Set correct permissions
+RUN chown -R www-data:www-data /var/www
 
-# Expose port 8080
-EXPOSE 8080
+# Switch to non-root user (to prevent plugin execution issues)
+USER www-data
 
-# Start PHP-FPM
-CMD ["php-fpm"]
+# Install Symfony dependencies (without global Symfony Flex)
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+
+# Run auto-scripts manually, ignoring errors
+RUN composer run-script auto-scripts || true
+
+# Switch back to root user
+USER root
+
+# Expose port 80 for Apache
+EXPOSE 80
+
+# Start Apache
+CMD ["apache2-foreground"]
