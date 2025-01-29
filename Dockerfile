@@ -6,19 +6,17 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     unzip \
     git \
-    && docker-php-ext-install zip
-
-# Install PDO MySQL extension
-RUN docker-php-ext-install pdo pdo_mysql
+    php-cli \
+    && docker-php-ext-install zip pdo pdo_mysql
 
 # Set the working directory
 WORKDIR /var/www/html
 
+# Copy Composer
+COPY --from=composer:latest /usr/local/bin/composer /usr/local/bin/composer
+
 # Copy the composer.lock and composer.json files
 COPY composer.json composer.lock ./
-
-# Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
