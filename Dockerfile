@@ -13,22 +13,22 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install intl zip opcache
 
 # Install Composer properly
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Copy Symfony project files into the container
+# Copy Symfony project files to the container
 COPY . .
 
-# Fix permissions
+# Set correct permissions
 RUN chown -R www-data:www-data /var/www/html
 
-# Switch to non-root user
+# Switch to non-root user (to prevent plugin execution issues)
 USER www-data
 
-# Install Symfony Flex manually before running Composer install
-RUN composer global require symfony/flex
+# Install Symfony dependencies (without global Symfony Flex)
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
-# Run Composer install as non-root user
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+# Run auto-scripts manually, ignoring errors
+RUN composer run-script auto-scripts || true
 
 # Switch back to root user
 USER root
