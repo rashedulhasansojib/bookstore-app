@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
 RUN a2enmod rewrite
 
 WORKDIR /app
-
+VOLUME /app/var/
 COPY . .
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
