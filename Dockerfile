@@ -17,7 +17,7 @@ RUN COMPOSER_ALLOW_SUPERUSER=1 composer install --no-scripts --no-autoloader
 
 EXPOSE 80
 
-# RUN sed -i 's!/var/www/html!/var/www/html/public!g' \
-#   /etc/apache2/sites-available/000-default.conf
+RUN sed -i 's!/var/www/html!/var/www/html/public!g' \
+  /etc/apache2/sites-available/000-default.conf
 
 CMD ["apache2-foreground"]
